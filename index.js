@@ -22,7 +22,7 @@ const node_session_secret = process.env.NODE_SESSION_SECRET;
 
 var {database} = include('databaseConnection');
 
-const userCollection = database.db(mongodb_database).collection('users');
+const userCollection = database.db(mongodb_database).collection('user');
 
 app.use(express.urlencoded({extended: false}));
 
@@ -163,8 +163,13 @@ app.get('/members', (req, res) => {
         `);
 });
 app.get('/logout', (req, res) => {
-    req.session.destroy();
-    res.redirect('/');
+    req.session.destroy((err) => {
+        if (err) {
+            console.log('Session destroy error:', err);
+        }
+        res.clearCookie('connect.sid');
+        res.redirect('/');
+    });
 });
 
 app.use(express.static(__dirname + "/public"));
