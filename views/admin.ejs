@@ -1,0 +1,20 @@
+<%- include("templates/header") %>
+
+<div class="container mt-4">
+    <h2>Users</h2>
+    <ul class="list-group">
+        <% for (let i = 0; i < users.length; i++) { %>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <%= users[i].name %> (<%= users[i].user_type %>)
+                </div>
+                <div>
+                    <button class="btn btn-danger btn-sm">Promote to Admin</button>
+                    <button class="btn btn-success btn-sm">Demote to User</button>
+                </div>
+            </li>
+        <% } %>
+    </ul>
+</div>
+
+<%- include("templates/footer") %>
