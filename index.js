@@ -62,6 +62,10 @@ app.post('/signupSubmit', async (req, res) => {
     });
     const validationResult = schema.validate({name, email, password});
 
+    req.session.authenticated = true;
+    req.session.name = name;
+    req.session.cookie.maxAge = expireTime;
+
     if (validationResult.error != null) {
         if(name == "") {
             res.render('signup', {error: 'Name is required.'});
@@ -131,7 +135,7 @@ app.get('/cats', (req, res) => {
 
 app.get('/admin', async (req, res) => {
     if(!req.session.authenticated) {
-        res.redirect('/');
+        res.redirect('/login');
     }
     const result = await userCollection.find({name: req.session.name}).project({email: 1, name: 1, password: 1, user_type: 1, _id: 1}).toArray();
     if (result[0].user_type != "admin") {
