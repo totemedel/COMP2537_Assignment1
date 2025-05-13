@@ -1,6 +1,7 @@
 require("./utils.js");
 require('dotenv').config();
 const express = require('express');
+const { ObjectId } = require('mongodb');
 
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
@@ -139,11 +140,69 @@ app.get('/admin', async (req, res) => {
     }
     const result = await userCollection.find({name: req.session.name}).project({email: 1, name: 1, password: 1, user_type: 1, _id: 1}).toArray();
     if (result[0].user_type != "admin") {
-        res.status(403).send("You are not authorized to access this page.");
+        res.status(403).send("403: You are not authorized to access this page.");
         return;
     }
     const users = await userCollection.find({}).project({email: 1, name: 1, user_type: 1, _id: 1}).toArray();
     res.render('admin', {users: users});
+});
+
+app.post('/promote', async (req, res) => {
+    if (!req.session.authenticated) {
+        res.redirect('/login');
+        return;
+    }
+    // Check if current user is admin
+    const currentUser = await userCollection.findOne({ name: req.session.name });
+    if (!currentUser || currentUser.user_type !== 'admin') {
+        res.status(403).send("403: You are not authorized to perform this action.");
+        return;
+    }
+
+    const userId = req.body.userId;
+    const userType = req.body.userType;
+
+    if (!ObjectId.isValid(userId)) {
+        res.status(400).send("Invalid user ID format.");
+        return;
+    }
+
+    try {
+        await userCollection.updateOne({ _id: new ObjectId(userId) }, { $set: { user_type: userType } });
+        res.redirect('/admin');
+    } catch (error) {
+        console.error("Error promoting user:", error);
+        res.status(500).send("Error updating user type.");
+    }
+});
+
+app.post('/demote', async (req, res) => {
+    if (!req.session.authenticated) {
+        res.redirect('/login');
+        return;
+    }
+    // Check if current user is admin
+    const currentUser = await userCollection.findOne({ name: req.session.name });
+    if (!currentUser || currentUser.user_type !== 'admin') {
+        res.status(403).send("403: You are not authorized to perform this action.");
+        return;
+    }
+
+    const userId = req.body.userId;
+    const userType = req.body.userType;
+
+    if (!ObjectId.isValid(userId)) {
+        res.status(400).send("Invalid user ID format.");
+        return;
+    }
+
+    try {
+        await userCollection.updateOne({ _id: new ObjectId(userId) }, { $set: { user_type: userType } });
+        res.redirect('/admin');
+    } catch (error) {
+        console.error("Error demoting user:", error);
+        res.status(500).send("Error updating user type.");
+    }
 });
 
 app.get('/logout', (req, res) => {
